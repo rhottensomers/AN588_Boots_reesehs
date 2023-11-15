@@ -1,0 +1,73 @@
+---
+title: "reesehs_OriginalHomeworkCode_05"
+author: "Reese Hotten-Somers"
+date: "2023-11-13"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 1: Using the “KamilarAndCooperData.csv” dataset, run a linear regression looking at log(HomeRange_km2) in relation to log(Body_mass_female_mean) and report your β coeffiecients (slope and intercept).
+
+```{r, prelims}
+library(curl)
+f <- curl("https://raw.githubusercontent.com/fuzzyatelin/fuzzyatelin.github.io/master/AN588_Fall23/KamilarAndCooperData.csv") #imports data from Kamilar/Cooper data
+d <- read.csv(f, header = TRUE, sep = ",", stringsAsFactors = FALSE)  #reads data and creates data frame from it
+head(d) #returns data frame
+
+```
+
+```{r, q1}
+ml <- lm(data = d, log(HomeRange_km2)~log(Body_mass_female_mean)) #fits linear model to data
+summary(ml)
+
+ml$coefficients #states beta coefficients 
+
+ci <- confint(ml, level = 0.95) #get confidence interval
+ci
+
+```
+
+## Question 2: Then, use bootstrapping to sample from your data 1000 times with replacement, each time fitting the same model and calculating the same coefficients. This generates a sampling distribution for each β
+ coefficient. 
+```{r, q2}
+set.seed(123)
+library(boot)
+
+bstat <- function(formula, data, indices){
+  d <- data[indices,] #allows bootstrap 
+  fit <- lm(formula, data = d)
+  return(fit$coefficients)
+} #creates function for the boot function
+
+results <- boot(d, statistic = bstat, R=1000, formula = log(HomeRange_km2)~log(Body_mass_female_mean))#bootstraps the data 1000 times and takes the lm each time
+print(results)
+
+
+boot.ci(results, type = "bca", index = 1) #CI for intercept
+boot.ci(results, type = "bca", index = 2) #CI for slope
+
+#this website was incredibly helpful!: https://www.r-bloggers.com/2022/12/how-to-perform-bootstrapping-in-r/#google_vignette
+```
+
+
+## Discussion: 
+How does the former compare to the SE estimated from your entire dataset using the formula for standard error implemented in lm()?
+  The SE for the lm() betas/coefficients were 0.67293 and 0.08488. While the SEs for the bootstrap were 0.59240029 0.07677337. Bootstrapping allowed for slightly lower SE values. 
+  
+How does the latter compare to the 95% CI estimated from your entire dataset?
+  The CI lm() intercept was -10.7720889, -8.110374 and for slope 0.8685707  1.204292. Whereas the bootstrap CI for intercept was -10.597,  -8.278 and slope 0.886,  1.187. Bootstraping caused small diferences in the CI leading to a lower range but not by much. 
+
+## Challenges 
+Honestly I didn't really struggle with this weeks homework. The website I found was incredbily helpful in understanding the boot() function. 
+
+## Peer Commentary (Jess)
+Great job with this homework assignment, Reese! Our codes for both questions are nearly identical. I'm grasping at straws because your work is already outstanding but here are a few minor adjustments that could be made:
+
+- In Question #2, there is an additional space between the terms β and coefficient. 
+- Embed your website links instead of just adding the URL; it gives the Rmd file a cleaner look. To do this: [website] (URL Link)
+- Consider adding an Rmd theme; they make things so FUN.
+- In the discussion section (paragraph #2), the word "bootstrapping" is misspelled.
+- In the challenges section, the word "incredibly" is misspelled. 
